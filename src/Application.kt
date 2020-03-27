@@ -15,6 +15,9 @@ import io.ktor.features.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import java.util.*
 import com.google.gson.*
+import io.ktor.server.engine.commandLineEnvironment
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import kotlin.collections.ArrayList
 
 
@@ -31,7 +34,9 @@ enum class GameState{
 
 data class SocketUser(val socketId: String, var username:String?,var inGame:Boolean)
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+fun main(args: Array<String>){
+    embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
+}
 
 var rooms: ArrayList<GameRoom> = ArrayList()
 
