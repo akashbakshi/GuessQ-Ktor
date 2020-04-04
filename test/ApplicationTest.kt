@@ -25,5 +25,14 @@ class ApplicationTest {
                 assertEquals("HELLO WORLD!", response.content)
             }
         }
+    }
+
+    @Test
+    fun testHostLobby(){
+        withTestApplication({ module(testing = true) }) {
+            handleWebSocket("/host_room"){
+
+            }
+        }
     }*/
 }

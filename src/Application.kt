@@ -1,6 +1,7 @@
 package com.akashbakshi
 
 import com.akashbakshi.models.GameRoom
+import com.akashbakshi.models.Session
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
@@ -20,7 +21,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import kotlin.collections.ArrayList
 
-
 enum class GameState{
     GAME_PENDING,
     GAME_IN_PROGRESS,
@@ -38,7 +38,7 @@ fun main(args: Array<String>){
     embeddedServer(Netty, commandLineEnvironment(args)).start(wait = true)
 }
 
-var rooms: ArrayList<GameRoom> = ArrayList()
+var sessions: ArrayList<Session> = ArrayList()
 
 fun newSocketUser(id:String,username: String?,inGame: Boolean):SocketUser{
     return SocketUser(id,username,inGame)
@@ -48,7 +48,7 @@ fun newSocketUser(id:String,username: String?,inGame: Boolean):SocketUser{
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
 
-    install(io.ktor.websocket.WebSockets) {
+    install(WebSockets) {
         pingPeriod = Duration.ofSeconds(15)
         timeout = Duration.ofSeconds(15)
         maxFrameSize = Long.MAX_VALUE
@@ -65,18 +65,20 @@ fun Application.module(testing: Boolean = false) {
         webSocket("/host_room") {
             val hostSocketUser = newSocketUser(UUID.randomUUID().toString(),null,true)
             val newRoom = GameRoom(UUID.randomUUID().toString(),hostSocketUser,arrayListOf<SocketUser>())
-            rooms.add(newRoom)
+            val tmpSession = Session(true,arrayListOf<Pair<String,Int>>(),newRoom,GameState.GAME_PENDING)
+            sessions.add(tmpSession)
+
             try {
                 while (true) {
                     val frame = incoming.receive()
                     if (frame is Frame.Text) {
-                        println(frame.readText())
-                        println(Gson().toJson(hostSocketUser))
-                        send(Gson().toJson(rooms))
+                        send(Gson().toJson(tmpSession.room))
                     }
                 }
             } catch (e: ClosedReceiveChannelException) {
                 // Do nothing!
+
+                println("onClose ${closeReason.await()}")
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
@@ -85,4 +87,6 @@ fun Application.module(testing: Boolean = false) {
 
     }
 }
+
+
 
